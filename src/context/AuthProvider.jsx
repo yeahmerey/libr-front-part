@@ -1,11 +1,10 @@
-// src/context/AuthContext.jsx
-import { useEffect, useState } from "react";
-import { AuthContext } from "./AuthContextConst.js";
+// src/context/AuthProvider.jsx
+import { useState, useEffect } from "react";
+import { AuthContext } from "./AuthContext";
+
 const API_BASE_URL = "http://localhost:8000";
 
-// const AuthContext = createContext();
-
-export default function AuthProvider({ children }) {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -36,8 +35,14 @@ export default function AuthProvider({ children }) {
       credentials: "include",
       body: JSON.stringify({ username, password }),
     });
-    if (!res.ok) throw new Error("Login failed");
-    await checkAuth(); // обновляем состояние после логина
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      const msg = errorData.detail || "Login failed";
+      throw new Error(msg);
+    }
+
+    await checkAuth();
   };
 
   const register = async (username, email, password) => {
@@ -46,12 +51,15 @@ export default function AuthProvider({ children }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, email, password }),
     });
-    if (!res.ok) throw new Error("Registration failed");
-    // После регистрации — можно сразу логиниться или перенаправлять
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      const msg = errorData.detail || "Registration failed";
+      throw new Error(msg);
+    }
   };
 
   const logout = async () => {
-    // FastAPI должен иметь эндпоинт /auth/logout, который очищает cookie
     await fetch(`${API_BASE_URL}/auth/logout`, {
       method: "POST",
       credentials: "include",
@@ -69,11 +77,3 @@ export default function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
-
-// export const useAuth = () => {
-//   const context = useContext(AuthContext);
-//   if (!context) {
-//     throw new Error("useAuth must be used within AuthProvider");
-//   }
-//   return context;
-// };
