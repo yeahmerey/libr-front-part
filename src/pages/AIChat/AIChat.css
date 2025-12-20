@@ -1,0 +1,114 @@
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+  max-width: 700px;
+  margin: 20px auto;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.chat-box {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: #f8f9fa;
+}
+
+.chat-message {
+  position: relative;
+  max-width: 75%;
+  padding: 0.9rem 1.2rem;
+  margin-bottom: 12px;
+  border-radius: 20px;
+  font-size: 1rem;
+  line-height: 1.5;
+  word-wrap: break-word;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chat-message.user {
+  background: linear-gradient(135deg, #c3e8ff, #a7d8ff);
+  align-self: flex-end;
+  text-align: right;
+  color: #202124;
+}
+
+.chat-message.gemini {
+  background: linear-gradient(135deg, #4285f4, #34a853);
+  color: #fff;
+  align-self: flex-start;
+  text-align: left;
+}
+
+.chat-message:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.copy-icon {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  opacity: 0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.chat-message:hover .copy-icon {
+  opacity: 1;
+}
+
+.input-form {
+  display: flex;
+  padding: 1rem;
+  background: #ffffff;
+  border-top: 1px solid #ddd;
+}
+
+.input-form input {
+  flex: 1;
+  padding: 0.8rem 1.2rem;
+  border: 1px solid #ccc;
+  border-radius: 25px;
+  outline: none;
+  font-size: 1rem;
+}
+
+.input-form button {
+  margin-left: 12px;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #4285f4, #34a853);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.input-form button:hover {
+  filter: brightness(1.1);
+}
+
+.input-form button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.gemini-heading {
+  font-weight: 700;
+  font-size: 2rem;
+  background: linear-gradient(90deg, #4285f4, #34a853, #fbbc05, #ea4335);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+  margin: 20px 0;
+}
