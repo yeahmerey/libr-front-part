@@ -33,7 +33,17 @@ export default function Profile() {
       });
     }
   }, [user]);
-
+  function formatDateTime(isoString) {
+    const date = new Date(isoString);
+    return date.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  }
   // === Load user's posts ===
   useEffect(() => {
     const loadPosts = async () => {
@@ -296,6 +306,11 @@ export default function Profile() {
                   style={{ maxWidth: "100%", height: "auto" }}
                 />
               )}
+              <p
+                style={{ fontSize: "0.85em", color: "#666", marginTop: "8px" }}
+              >
+                {formatDateTime(post.created_at)}
+              </p>
               <div style={{ marginTop: "10px" }}>
                 <button
                   onClick={() => startEditPost(post)}
