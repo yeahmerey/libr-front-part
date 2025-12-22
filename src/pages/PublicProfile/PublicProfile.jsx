@@ -1,5 +1,3 @@
-import "./PublicProfile.css";
-// src/pages/PublicProfile/PublicProfile.jsx
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { userService } from "../../services/userService";
@@ -31,7 +29,47 @@ export default function PublicProfile() {
 
   return (
     <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
-      <h2>{user.username}'s Profile</h2>
+      {/* Шапка с аватаркой */}
+      <div
+        style={{ display: "flex", alignItems: "center", marginBottom: "24px" }}
+      >
+        {user.image_url ? (
+          <img
+            src={`http://localhost:8000${user.image_url}`}
+            alt={user.username}
+            style={{
+              width: "80px",
+              height: "80px",
+              borderRadius: "50%",
+              objectFit: "cover",
+              marginRight: "20px",
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: "80px",
+              height: "80px",
+              borderRadius: "50%",
+              backgroundColor: "#e0e0e0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#666",
+              fontSize: "32px",
+              fontWeight: "bold",
+              marginRight: "20px",
+            }}
+          >
+            {user.username.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div>
+          <h2>{user.username}'s Profile</h2>
+        </div>
+      </div>
+
+      {/* Данные профиля */}
       {user.bio && (
         <p>
           <strong>Bio:</strong> {user.bio}
@@ -48,7 +86,8 @@ export default function PublicProfile() {
         </p>
       )}
 
-      <h3>Posts ({posts.length})</h3>
+      {/* Посты */}
+      <h3 style={{ marginTop: "30px" }}>Posts ({posts.length})</h3>
       {posts.length === 0 ? (
         <p>No posts yet.</p>
       ) : (
@@ -60,7 +99,8 @@ export default function PublicProfile() {
                 border: "1px solid #eee",
                 padding: "15px",
                 marginBottom: "15px",
-                borderRadius: "4px",
+                borderRadius: "8px",
+                backgroundColor: "#fafafa",
               }}
             >
               <p>{post.content}</p>
@@ -68,10 +108,17 @@ export default function PublicProfile() {
                 <img
                   src={`http://localhost:8000${post.image_url}`}
                   alt="Post"
-                  style={{ maxWidth: "100%", height: "auto" }}
+                  style={{
+                    maxWidth: "100%",
+                    height: "auto",
+                    borderRadius: "4px",
+                    marginTop: "8px",
+                  }}
                 />
               )}
-              <p style={{ fontSize: "0.85em", color: "#666" }}>
+              <p
+                style={{ fontSize: "0.85em", color: "#666", marginTop: "8px" }}
+              >
                 {new Date(post.created_at).toLocaleString()}
               </p>
             </div>

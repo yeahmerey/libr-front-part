@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { userService } from "../../services/userService";
 import { postService } from "../../services/postService";
 
 export default function Profile() {
   const { user, setUser } = useAuth();
+  const fileInputRef = useRef(null); // ← для управления input'ом
 
   // === User profile ===
   const [editingProfile, setEditingProfile] = useState(false);
@@ -21,6 +22,7 @@ export default function Profile() {
   const [editingPostId, setEditingPostId] = useState(null);
   const [postForm, setPostForm] = useState({ content: "", image: null });
   const [isCreating, setIsCreating] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   // === Load user data ===
   useEffect(() => {
@@ -31,8 +33,12 @@ export default function Profile() {
         location: user.location || "",
         year_of_birth: user.year_of_birth ? String(user.year_of_birth) : "",
       });
+      if (user.image_url) {
+        setAvatarPreview(`http://localhost:8000${user.image_url}`);
+      }
     }
   }, [user]);
+
   function formatDateTime(isoString) {
     const date = new Date(isoString);
     return date.toLocaleString("en-GB", {
@@ -41,9 +47,10 @@ export default function Profile() {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false,
+      hour112: false,
     });
   }
+
   // === Load user's posts ===
   useEffect(() => {
     const loadPosts = async () => {
@@ -127,7 +134,6 @@ export default function Profile() {
       } else {
         await postService.createPost(postForm.content, postForm.image);
       }
-      // Обновляем список постов
       const userPosts = await postService.getMyPosts();
       setPosts(userPosts || []);
       setIsCreating(false);
@@ -146,10 +152,118 @@ export default function Profile() {
     }
   };
 
+  // === Avatar handlers ===
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      setAvatarPreview(previewUrl);
+      await userService.uploadAvatar(file);
+      const updatedUser = await userService.getUserById(user.id);
+      setUser(updatedUser);
+    } catch (err) {
+      alert("Failed to upload avatar: " + err.message);
+      setAvatarPreview(
+        user.image_url ? `http://localhost:8000${user.image_url}` : null
+      );
+    } finally {
+      // Очищаем input, чтобы можно было загрузить тот же файл повторно
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
   if (!user) return <p style={{ padding: "20px" }}>Loading...</p>;
 
   return (
     <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
+      {/* === Красивая аватарка === */}
+      <div style={{ marginBottom: "20px", textAlign: "center" }}>
+        <div
+          style={{
+            position: "relative",
+            display: "inline-block",
+            cursor: "pointer",
+          }}
+          onClick={triggerFileInput}
+        >
+          {avatarPreview ? (
+            <img
+              src={avatarPreview}
+              alt="Avatar"
+              style={{
+                width: "100px",
+                height: "100px",
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "2px solid #ddd",
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: "100px",
+                height: "100px",
+                borderRadius: "50%",
+                backgroundColor: "#f0f0f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "40px",
+                color: "#999",
+                fontWeight: "bold",
+                border: "2px dashed #ccc",
+              }}
+            >
+              {user.username.charAt(0).toUpperCase()}
+            </div>
+          )}
+
+          {/* Кнопка поверх аватарки */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "0",
+              right: "0",
+              backgroundColor: "rgba(0,0,0,0.6)",
+              color: "white",
+              borderRadius: "50%",
+              width: "24px",
+              height: "24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "12px",
+            }}
+          >
+            ✎
+          </div>
+        </div>
+
+        {/* Скрытый input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          onChange={handleAvatarChange}
+          style={{ display: "none" }} // ← скрыт!
+        />
+
+        <p style={{ marginTop: "8px", fontSize: "0.9em", color: "#666" }}>
+          Click avatar to change
+        </p>
+      </div>
+
       {/* === Profile Section === */}
       <h2>Profile</h2>
       {editingProfile ? (
@@ -159,7 +273,8 @@ export default function Profile() {
             marginBottom: "20px",
             padding: "15px",
             border: "1px solid #ddd",
-            borderRadius: "4px",
+            borderRadius: "8px",
+            backgroundColor: "#fafafa",
           }}
         >
           <input
@@ -168,7 +283,12 @@ export default function Profile() {
             value={profileData.username}
             onChange={handleProfileChange}
             required
-            style={{ display: "block", marginBottom: "10px" }}
+            style={{
+              display: "block",
+              marginBottom: "12px",
+              width: "100%",
+              padding: "8px",
+            }}
           />
           <textarea
             name="bio"
@@ -176,14 +296,19 @@ export default function Profile() {
             value={profileData.bio}
             onChange={handleProfileChange}
             rows="2"
-            style={{ width: "100%", marginBottom: "10px" }}
+            style={{ width: "100%", marginBottom: "12px", padding: "8px" }}
           />
           <input
             name="location"
             placeholder="Location"
             value={profileData.location}
             onChange={handleProfileChange}
-            style={{ display: "block", marginBottom: "10px" }}
+            style={{
+              display: "block",
+              marginBottom: "12px",
+              width: "100%",
+              padding: "8px",
+            }}
           />
           <input
             name="year_of_birth"
@@ -193,16 +318,43 @@ export default function Profile() {
             onChange={handleProfileChange}
             min="1900"
             max={new Date().getFullYear()}
-            style={{ display: "block", marginBottom: "10px" }}
+            style={{
+              display: "block",
+              marginBottom: "12px",
+              width: "100%",
+              padding: "8px",
+            }}
           />
-          <button type="submit">Save Profile</button>
-          <button
-            type="button"
-            onClick={() => setEditingProfile(false)}
-            style={{ marginLeft: "10px" }}
-          >
-            Cancel
-          </button>
+          <div>
+            <button
+              type="submit"
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Save Profile
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingProfile(false)}
+              style={{
+                marginLeft: "10px",
+                padding: "8px 16px",
+                backgroundColor: "#6c757d",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </form>
       ) : (
         <div style={{ marginBottom: "20px" }}>
@@ -224,13 +376,26 @@ export default function Profile() {
               <strong>Year of Birth:</strong> {user.year_of_birth}
             </p>
           )}
-          <button onClick={handleProfileEdit} style={{ marginTop: "10px" }}>
+          <button
+            onClick={handleProfileEdit}
+            style={{
+              marginTop: "10px",
+              padding: "6px 12px",
+              backgroundColor: "#28a745",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
             Edit Profile
           </button>
         </div>
       )}
 
-      <hr style={{ margin: "30px 0" }} />
+      <hr
+        style={{ margin: "30px 0", border: "0", borderTop: "1px solid #eee" }}
+      />
 
       {/* === Posts Section === */}
       <div
@@ -238,10 +403,23 @@ export default function Profile() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          marginBottom: "15px",
         }}
       >
         <h2>My Posts</h2>
-        <button onClick={startCreatePost}>+ New Post</button>
+        <button
+          onClick={startCreatePost}
+          style={{
+            padding: "6px 12px",
+            backgroundColor: "#17a2b8",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          + New Post
+        </button>
       </div>
 
       {isCreating && (
@@ -251,7 +429,8 @@ export default function Profile() {
             marginBottom: "20px",
             padding: "15px",
             border: "1px solid #ddd",
-            borderRadius: "4px",
+            borderRadius: "8px",
+            backgroundColor: "#f9f9f9",
           }}
         >
           <textarea
@@ -261,24 +440,45 @@ export default function Profile() {
             onChange={handlePostChange}
             required
             rows="3"
-            style={{ width: "100%", marginBottom: "10px" }}
+            style={{ width: "100%", marginBottom: "12px", padding: "8px" }}
           />
           <input
             type="file"
             name="image"
             accept="image/*"
             onChange={handlePostChange}
+            style={{ marginBottom: "12px" }}
           />
-          <button type="submit">
-            {editingPostId ? "Update Post" : "Create Post"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsCreating(false)}
-            style={{ marginLeft: "10px" }}
-          >
-            Cancel
-          </button>
+          <div>
+            <button
+              type="submit"
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              {editingPostId ? "Update Post" : "Create Post"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsCreating(false)}
+              style={{
+                marginLeft: "10px",
+                padding: "8px 16px",
+                backgroundColor: "#6c757d",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </form>
       )}
 
@@ -295,7 +495,8 @@ export default function Profile() {
                 border: "1px solid #eee",
                 padding: "15px",
                 marginBottom: "15px",
-                borderRadius: "4px",
+                borderRadius: "8px",
+                backgroundColor: "#fafafa",
               }}
             >
               <p>{post.content}</p>
@@ -303,7 +504,12 @@ export default function Profile() {
                 <img
                   src={`http://localhost:8000${post.image_url}`}
                   alt="Post"
-                  style={{ maxWidth: "100%", height: "auto" }}
+                  style={{
+                    maxWidth: "100%",
+                    height: "auto",
+                    borderRadius: "4px",
+                    marginTop: "8px",
+                  }}
                 />
               )}
               <p
@@ -314,13 +520,27 @@ export default function Profile() {
               <div style={{ marginTop: "10px" }}>
                 <button
                   onClick={() => startEditPost(post)}
-                  style={{ marginRight: "10px" }}
+                  style={{
+                    marginRight: "10px",
+                    padding: "4px 8px",
+                    backgroundColor: "#ffc107",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => handleDeletePost(post.id)}
-                  style={{ color: "red" }}
+                  style={{
+                    padding: "4px 8px",
+                    backgroundColor: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
                 >
                   Delete
                 </button>
