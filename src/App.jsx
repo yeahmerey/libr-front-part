@@ -9,6 +9,7 @@ import AIChat from "./pages/AIChat/AIChat.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
 import PrivateRoute from "./components/PrivateRoute/PrivateRoute.jsx";
 import PublicProfile from "./pages/PublicProfile/PublicProfile.jsx";
+import AdminPanel from "./pages/AdminPanel/AdminPanel.jsx";
 function App() {
   return (
     <BrowserRouter>
@@ -36,6 +37,14 @@ function App() {
             }
           />
         </Route>
+        <Route
+          path="admin"
+          element={
+            <PrivateRoute>
+              <AdminPanel />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
