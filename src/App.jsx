@@ -8,7 +8,7 @@ import Register from "./pages/Register/Register.jsx";
 import AIChat from "./pages/AIChat/AIChat.jsx";
 import Profile from "./pages/Profile/Profile.jsx";
 import PrivateRoute from "./components/PrivateRoute/PrivateRoute.jsx";
-
+import PublicProfile from "./pages/PublicProfile/PublicProfile.jsx";
 function App() {
   return (
     <BrowserRouter>
@@ -16,6 +16,7 @@ function App() {
         <Route path="/" element={<RootLayout />}>
           <Route index element={<Home />} />
           <Route path="search" element={<Search />} />
+          <Route path="users/:id" element={<PublicProfile />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route
