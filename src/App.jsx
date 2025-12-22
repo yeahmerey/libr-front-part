@@ -10,6 +10,9 @@ import Profile from "./pages/Profile/Profile.jsx";
 import PrivateRoute from "./components/PrivateRoute/PrivateRoute.jsx";
 import PublicProfile from "./pages/PublicProfile/PublicProfile.jsx";
 import AdminPanel from "./pages/AdminPanel/AdminPanel.jsx";
+import ContentList from "./pages/ContentList/ContentList.jsx";
+import ContentDetail from "./pages/ContentDetail/ContentDetail.jsx";
+import AdminContent from "./pages/AdminContent/AdminContent.jsx";
 function App() {
   return (
     <BrowserRouter>
@@ -36,15 +39,25 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route path="content" element={<ContentList />} />
+          <Route path="content/:id" element={<ContentDetail />} />
+          <Route
+            path="admin/content"
+            element={
+              <PrivateRoute>
+                <AdminContent />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="admin"
+            element={
+              <PrivateRoute>
+                <AdminPanel />
+              </PrivateRoute>
+            }
+          />
         </Route>
-        <Route
-          path="admin"
-          element={
-            <PrivateRoute>
-              <AdminPanel />
-            </PrivateRoute>
-          }
-        />
       </Routes>
     </BrowserRouter>
   );

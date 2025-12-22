@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import apiClient from "../../services/apiClient.js";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 export default function AdminPanel() {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
@@ -125,6 +125,8 @@ export default function AdminPanel() {
     <div style={{ padding: "20px", maxWidth: "1000px", margin: "0 auto" }}>
       <h2>Admin Panel — Users ({users.length})</h2>
       <button onClick={() => navigate(-1)}>Back</button>
+      {/* <Link to="/profile">Back to Profile</Link> */}
+      <Link to="/admin/content">Create Content</Link>
       {/* Форма создания пользователя */}
       <div
         style={{

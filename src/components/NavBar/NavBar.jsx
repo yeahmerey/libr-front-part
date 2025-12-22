@@ -1,6 +1,5 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-
 export default function NavBar() {
   const { user, logout } = useAuth();
 
@@ -9,6 +8,7 @@ export default function NavBar() {
       <nav className="nav">
         <NavLink to="/">Home</NavLink>
         <NavLink to="/search">Search</NavLink>
+        <NavLink to="/content">Content</NavLink>
         {user && <NavLink to="/profile">Profile</NavLink>}
         {user && <NavLink to="/chat">AI Chat</NavLink>}
         {user && user.is_admin && <NavLink to="/admin">Admin Panel</NavLink>}
