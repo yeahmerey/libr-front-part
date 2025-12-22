@@ -1,3 +1,4 @@
+// src/pages/Profile/Profile.jsx
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { userService } from "../../services/userService";
@@ -24,6 +25,10 @@ export default function Profile() {
   const [postForm, setPostForm] = useState({ content: "", image: null });
   const [isCreating, setIsCreating] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
+
+  // === Reviews ===
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
 
   // === Follow system ===
   const [followersCount, setFollowersCount] = useState(0);
@@ -65,18 +70,6 @@ export default function Profile() {
     }
   }, [user]);
 
-  function formatDateTime(isoString) {
-    const date = new Date(isoString);
-    return date.toLocaleString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-  }
-
   // === Load user's posts ===
   useEffect(() => {
     const loadPosts = async () => {
@@ -92,6 +85,43 @@ export default function Profile() {
     };
     loadPosts();
   }, [user]);
+
+  // === Load user's reviews ===
+  useEffect(() => {
+    const loadReviews = async () => {
+      if (!user) return;
+      setLoadingReviews(true);
+      try {
+        const response = await fetch(
+          `http://localhost:8000/users/${user.id}/reviews`,
+          {
+            credentials: "include",
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setReviews(data);
+        }
+      } catch (err) {
+        console.error("Failed to load reviews:", err);
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
+    loadReviews();
+  }, [user]);
+
+  function formatDateTime(isoString) {
+    const date = new Date(isoString);
+    return date.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  }
 
   // === Profile handlers ===
   const handleProfileEdit = () => setEditingProfile(true);
@@ -182,12 +212,10 @@ export default function Profile() {
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     if (!file.type.startsWith("image/")) {
       alert("Please select an image file");
       return;
     }
-
     try {
       const previewUrl = URL.createObjectURL(file);
       setAvatarPreview(previewUrl);
@@ -233,7 +261,7 @@ export default function Profile() {
 
   return (
     <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
-      {/* === Модальное окно: подписчики === */}
+      {/* === Модальные окна подписчиков (без изменений) === */}
       {showFollowers && (
         <div
           style={{
@@ -299,7 +327,7 @@ export default function Profile() {
                         display: "flex",
                         alignItems: "center",
                       }}
-                      onClick={() => setShowFollowers(false)} // Закрываем модалку при клике
+                      onClick={() => setShowFollowers(false)}
                     >
                       <img
                         src={
@@ -327,7 +355,6 @@ export default function Profile() {
         </div>
       )}
 
-      {/* === Модальное окно: подписки === */}
       {showFollowing && (
         <div
           style={{
@@ -393,7 +420,7 @@ export default function Profile() {
                         display: "flex",
                         alignItems: "center",
                       }}
-                      onClick={() => setShowFollowing(false)} // Закрываем модалку
+                      onClick={() => setShowFollowing(false)}
                     >
                       <img
                         src={
@@ -420,7 +447,8 @@ export default function Profile() {
           </div>
         </div>
       )}
-      {/* === Красивая аватарка === */}
+
+      {/* === Аватарка и профиль (без изменений) === */}
       <div style={{ marginBottom: "20px", textAlign: "center" }}>
         <div
           style={{
@@ -493,7 +521,6 @@ export default function Profile() {
         </p>
       </div>
 
-      {/* === Счётчики подписок === */}
       <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
         <div
           onClick={loadFollowers}
@@ -509,7 +536,6 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* === Profile Section === */}
       <h2>Profile</h2>
       {editingProfile ? (
         <form
@@ -642,7 +668,7 @@ export default function Profile() {
         style={{ margin: "30px 0", border: "0", borderTop: "1px solid #eee" }}
       />
 
-      {/* === Posts Section === */}
+      {/* === Posts Section (без изменений) === */}
       <div
         style={{
           display: "flex",
@@ -794,6 +820,59 @@ export default function Profile() {
           ))}
         </div>
       )}
+
+      {/* === My Reviews Section — НОВОЕ === */}
+      <div style={{ marginTop: "40px" }}>
+        <h2>My Reviews ({reviews.length})</h2>
+        {loadingReviews ? (
+          <p>Loading reviews...</p>
+        ) : reviews.length === 0 ? (
+          <p>You haven't reviewed any content yet.</p>
+        ) : (
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "15px" }}
+          >
+            {reviews.map((review) => (
+              <div
+                key={review.id}
+                style={{
+                  padding: "12px",
+                  border: "1px solid #eee",
+                  borderRadius: "6px",
+                  backgroundColor: "#fafafa",
+                }}
+              >
+                <Link
+                  to={`/content/${review.content_id}`}
+                  style={{
+                    textDecoration: "none",
+                    color: "#007bff",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {review.content_name} (
+                  {review.content_type === "book" ? "📚" : "🎬"})
+                </Link>
+                <div style={{ marginTop: "6px" }}>⭐ {review.rating}/5</div>
+                {review.comment && (
+                  <p style={{ color: "#555", marginTop: "6px" }}>
+                    "{review.comment}"
+                  </p>
+                )}
+                <div
+                  style={{
+                    fontSize: "0.85em",
+                    color: "#999",
+                    marginTop: "6px",
+                  }}
+                >
+                  {new Date(review.created_at).toLocaleDateString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
