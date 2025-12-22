@@ -11,6 +11,7 @@ export default function NavBar() {
         <NavLink to="/search">Search</NavLink>
         {user && <NavLink to="/profile">Profile</NavLink>}
         {user && <NavLink to="/chat">AI Chat</NavLink>}
+        {user && user.is_admin && <NavLink to="/admin">Admin Panel</NavLink>}
       </nav>
 
       <nav className="nav-second">
