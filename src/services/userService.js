@@ -38,4 +38,13 @@ export const userService = {
     const data = await response.json();
     return data; // должен вернуть { image_url: "..." }
   },
+  async toggleFollow(userId) {
+    return await apiClient(`/users/${userId}/follow`, { method: "POST" });
+  },
+  async getFollowers(userId) {
+    return await apiClient(`/users/${userId}/followers`);
+  },
+  async getFollowing(userId) {
+    return await apiClient(`/users/${userId}/following`);
+  },
 };

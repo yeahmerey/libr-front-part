@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { userService } from "../../services/userService";
 import { postService } from "../../services/postService";
+import { Link } from "react-router-dom";
 
 export default function Profile() {
   const { user, setUser } = useAuth();
-  const fileInputRef = useRef(null); // ← для управления input'ом
+  const fileInputRef = useRef(null);
 
   // === User profile ===
   const [editingProfile, setEditingProfile] = useState(false);
@@ -24,6 +25,14 @@ export default function Profile() {
   const [isCreating, setIsCreating] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
 
+  // === Follow system ===
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
+  const [followersList, setFollowersList] = useState([]);
+  const [followingList, setFollowingList] = useState([]);
+
   // === Load user data ===
   useEffect(() => {
     if (user) {
@@ -39,6 +48,23 @@ export default function Profile() {
     }
   }, [user]);
 
+  // === Load follow counts ===
+  useEffect(() => {
+    if (user) {
+      const loadFollowCounts = async () => {
+        try {
+          const followers = await userService.getFollowers(user.id);
+          const following = await userService.getFollowing(user.id);
+          setFollowersCount(followers.length);
+          setFollowingCount(following.length);
+        } catch (err) {
+          console.error("Failed to load follow counts:", err);
+        }
+      };
+      loadFollowCounts();
+    }
+  }, [user]);
+
   function formatDateTime(isoString) {
     const date = new Date(isoString);
     return date.toLocaleString("en-GB", {
@@ -47,7 +73,7 @@ export default function Profile() {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-      hour112: false,
+      hour12: false,
     });
   }
 
@@ -174,7 +200,6 @@ export default function Profile() {
         user.image_url ? `http://localhost:8000${user.image_url}` : null
       );
     } finally {
-      // Очищаем input, чтобы можно было загрузить тот же файл повторно
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -183,10 +208,218 @@ export default function Profile() {
     fileInputRef.current?.click();
   };
 
+  // === Follow handlers ===
+  const loadFollowers = async () => {
+    try {
+      const followers = await userService.getFollowers(user.id);
+      setFollowersList(followers);
+      setShowFollowers(true);
+    } catch (err) {
+      alert("Failed to load followers", err);
+    }
+  };
+
+  const loadFollowing = async () => {
+    try {
+      const following = await userService.getFollowing(user.id);
+      setFollowingList(following);
+      setShowFollowing(true);
+    } catch (err) {
+      alert("Failed to load following", err);
+    }
+  };
+
   if (!user) return <p style={{ padding: "20px" }}>Loading...</p>;
 
   return (
     <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
+      {/* === Модальное окно: подписчики === */}
+      {showFollowers && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              width: "90%",
+              maxWidth: "500px",
+              maxHeight: "80vh",
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "15px",
+              }}
+            >
+              <h3>Followers ({followersCount})</h3>
+              <button
+                onClick={() => setShowFollowers(false)}
+                style={{
+                  background: "none",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  width: "30px",
+                  height: "30px",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            {followersList.length === 0 ? (
+              <p>No followers yet.</p>
+            ) : (
+              <div>
+                {followersList.map((follower) => (
+                  <div
+                    key={follower.id}
+                    style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}
+                  >
+                    <Link
+                      to={`/users/${follower.id}`}
+                      style={{
+                        textDecoration: "none",
+                        color: "inherit",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                      onClick={() => setShowFollowers(false)} // Закрываем модалку при клике
+                    >
+                      <img
+                        src={
+                          follower.image_url
+                            ? `http://localhost:8000${follower.image_url}`
+                            : null
+                        }
+                        alt={follower.username}
+                        style={{
+                          width: "30px",
+                          height: "30px",
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                          marginRight: "10px",
+                        }}
+                        onError={(e) => (e.target.style.display = "none")}
+                      />
+                      <strong>{follower.username}</strong>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* === Модальное окно: подписки === */}
+      {showFollowing && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              width: "90%",
+              maxWidth: "500px",
+              maxHeight: "80vh",
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "15px",
+              }}
+            >
+              <h3>Following ({followingCount})</h3>
+              <button
+                onClick={() => setShowFollowing(false)}
+                style={{
+                  background: "none",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  width: "30px",
+                  height: "30px",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            {followingList.length === 0 ? (
+              <p>Not following anyone yet.</p>
+            ) : (
+              <div>
+                {followingList.map((following) => (
+                  <div
+                    key={following.id}
+                    style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}
+                  >
+                    <Link
+                      to={`/users/${following.id}`}
+                      style={{
+                        textDecoration: "none",
+                        color: "inherit",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                      onClick={() => setShowFollowing(false)} // Закрываем модалку
+                    >
+                      <img
+                        src={
+                          following.image_url
+                            ? `http://localhost:8000${following.image_url}`
+                            : null
+                        }
+                        alt={following.username}
+                        style={{
+                          width: "30px",
+                          height: "30px",
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                          marginRight: "10px",
+                        }}
+                        onError={(e) => (e.target.style.display = "none")}
+                      />
+                      <strong>{following.username}</strong>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {/* === Красивая аватарка === */}
       <div style={{ marginBottom: "20px", textAlign: "center" }}>
         <div
@@ -228,8 +461,6 @@ export default function Profile() {
               {user.username.charAt(0).toUpperCase()}
             </div>
           )}
-
-          {/* Кнопка поверх аватарки */}
           <div
             style={{
               position: "absolute",
@@ -250,18 +481,32 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Скрытый input */}
         <input
           type="file"
           ref={fileInputRef}
           accept="image/*"
           onChange={handleAvatarChange}
-          style={{ display: "none" }} // ← скрыт!
+          style={{ display: "none" }}
         />
-
         <p style={{ marginTop: "8px", fontSize: "0.9em", color: "#666" }}>
           Click avatar to change
         </p>
+      </div>
+
+      {/* === Счётчики подписок === */}
+      <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
+        <div
+          onClick={loadFollowers}
+          style={{ cursor: "pointer", color: "#007bff", fontWeight: "bold" }}
+        >
+          <strong>{followersCount}</strong> followers
+        </div>
+        <div
+          onClick={loadFollowing}
+          style={{ cursor: "pointer", color: "#007bff", fontWeight: "bold" }}
+        >
+          <strong>{followingCount}</strong> following
+        </div>
       </div>
 
       {/* === Profile Section === */}
