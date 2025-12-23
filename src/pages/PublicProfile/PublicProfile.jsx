@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { userService } from "../../services/userService";
+import { useTranslation } from "../../i18n/useTranslation";
 
 export default function PublicProfile() {
   const { id } = useParams();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -14,7 +16,7 @@ export default function PublicProfile() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  // Для модальных окон
+
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
   const [followersList, setFollowersList] = useState([]);
@@ -29,14 +31,12 @@ export default function PublicProfile() {
         setUser(userData);
         setPosts(userPosts);
 
-        // Загружаем подписчиков и подписки
         const followers = await userService.getFollowers(id);
         const following = await userService.getFollowing(id);
 
         setFollowersCount(followers.length);
         setFollowingCount(following.length);
 
-        // Проверяем, подписан ли текущий пользователь
         if (currentUser) {
           const isFollowing = following.some((f) => f.id === currentUser.id);
           setIsFollowing(isFollowing);
@@ -49,17 +49,17 @@ export default function PublicProfile() {
       }
     };
     fetchProfile();
-  }, [id, currentUser]);
+  }, [id, currentUser, navigate]);
 
   const handleFollowToggle = async () => {
     if (!currentUser) {
-      alert("Please log in to follow users");
+      alert(t("login"));
       return;
     }
     try {
       await userService.toggleFollow(user.id);
       setIsFollowing(!isFollowing);
-      // Обновляем счётчики
+
       const followers = await userService.getFollowers(user.id);
       const following = await userService.getFollowing(user.id);
       setFollowersCount(followers.length);
@@ -89,12 +89,11 @@ export default function PublicProfile() {
     }
   };
 
-  if (loading) return <p style={{ padding: "20px" }}>Loading...</p>;
-  if (!user) return <p style={{ padding: "20px" }}>User not found.</p>;
+  if (loading) return <p style={{ padding: "20px" }}>{t("loading...")}</p>;
+  if (!user) return <p style={{ padding: "20px" }}>{t("content-not-found")}</p>;
 
   return (
     <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
-      {/* Модальное окно: подписчики */}
       {showFollowers && (
         <div
           style={{
@@ -129,7 +128,9 @@ export default function PublicProfile() {
                 marginBottom: "15px",
               }}
             >
-              <h3>Followers ({followersCount})</h3>
+              <h3>
+                {t("followers")} ({followersCount})
+              </h3>
               <button
                 onClick={() => setShowFollowers(false)}
                 style={{
@@ -144,13 +145,16 @@ export default function PublicProfile() {
               </button>
             </div>
             {followersList.length === 0 ? (
-              <p>No followers yet.</p>
+              <p>{t("no-posts-yet")}</p>
             ) : (
               <div>
                 {followersList.map((follower) => (
                   <div
                     key={follower.id}
-                    style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}
+                    style={{
+                      padding: "8px 0",
+                      borderBottom: "1px solid #eee",
+                    }}
                   >
                     <img
                       src={
@@ -177,7 +181,6 @@ export default function PublicProfile() {
         </div>
       )}
 
-      {/* Модальное окно: подписки */}
       {showFollowing && (
         <div
           style={{
@@ -212,7 +215,9 @@ export default function PublicProfile() {
                 marginBottom: "15px",
               }}
             >
-              <h3>Following ({followingCount})</h3>
+              <h3>
+                {t("following")} ({followingCount})
+              </h3>
               <button
                 onClick={() => setShowFollowing(false)}
                 style={{
@@ -227,13 +232,16 @@ export default function PublicProfile() {
               </button>
             </div>
             {followingList.length === 0 ? (
-              <p>Not following anyone yet.</p>
+              <p>{t("no-posts-yet")}</p>
             ) : (
               <div>
                 {followingList.map((following) => (
                   <div
                     key={following.id}
-                    style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}
+                    style={{
+                      padding: "8px 0",
+                      borderBottom: "1px solid #eee",
+                    }}
                   >
                     <img
                       src={
@@ -260,9 +268,12 @@ export default function PublicProfile() {
         </div>
       )}
 
-      {/* Шапка профиля */}
       <div
-        style={{ display: "flex", alignItems: "center", marginBottom: "24px" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          marginBottom: "24px",
+        }}
       >
         {user.image_url ? (
           <img
@@ -310,49 +321,55 @@ export default function PublicProfile() {
                 cursor: "pointer",
               }}
             >
-              {isFollowing ? "Unfollow" : "Follow"}
+              {isFollowing ? t("unfollow") : t("follow")}
             </button>
           )}
         </div>
       </div>
 
-      {/* Счётчики подписок */}
-      <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "20px",
+          marginBottom: "20px",
+        }}
+      >
         <div
           onClick={loadFollowers}
           style={{ cursor: "pointer", color: "#007bff" }}
         >
-          <strong>{followersCount}</strong> followers
+          <strong>{followersCount}</strong> {t("followers")}
         </div>
         <div
           onClick={loadFollowing}
           style={{ cursor: "pointer", color: "#007bff" }}
         >
-          <strong>{followingCount}</strong> following
+          <strong>{followingCount}</strong> {t("following")}
         </div>
       </div>
 
-      {/* Остальные данные */}
       {user.bio && (
         <p>
-          <strong>Bio:</strong> {user.bio}
+          <strong>{t("bio")}:</strong> {user.bio}
         </p>
       )}
       {user.location && (
         <p>
-          <strong>Location:</strong> {user.location}
+          <strong>{t("location")}:</strong> {user.location}
         </p>
       )}
       {user.year_of_birth && (
         <p>
-          <strong>Year of Birth:</strong> {user.year_of_birth}
+          <strong>{t("year-of-birth")}:</strong> {user.year_of_birth}
         </p>
       )}
 
-      {/* Посты */}
-      <h3 style={{ marginTop: "30px" }}>Posts ({posts.length})</h3>
+      <h3 style={{ marginTop: "30px" }}>
+        {t("posts")} ({posts.length})
+      </h3>
+
       {posts.length === 0 ? (
-        <p>No posts yet.</p>
+        <p>{t("no-posts-yet")}</p>
       ) : (
         <div>
           {posts.map((post) => (
@@ -380,7 +397,11 @@ export default function PublicProfile() {
                 />
               )}
               <p
-                style={{ fontSize: "0.85em", color: "#666", marginTop: "8px" }}
+                style={{
+                  fontSize: "0.85em",
+                  color: "#666",
+                  marginTop: "8px",
+                }}
               >
                 {new Date(post.created_at).toLocaleString()}
               </p>

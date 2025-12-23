@@ -1,8 +1,11 @@
+// src/pages/Search/Search.jsx
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { userService } from "../../services/userService";
+import { useTranslation } from "../../i18n/useTranslation"; // ← добавлен импорт
 
 export default function Search() {
+  const { t } = useTranslation(); // ← хук локализации
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -16,7 +19,7 @@ export default function Search() {
     const search = async () => {
       setLoading(true);
       try {
-        const users = await userService.searchUser(query); // ← searchUser (без "s")
+        const users = await userService.searchUser(query);
         setResults(users);
       } catch (err) {
         console.error("Search failed:", err);
@@ -32,19 +35,19 @@ export default function Search() {
 
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
-      <h2>Search Users</h2>
+      <h2>{t("search-users")}</h2>
       <input
         type="text"
-        placeholder="Enter username..."
+        placeholder={t("enter-username")}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         style={{ width: "100%", padding: "8px", marginBottom: "20px" }}
       />
 
-      {loading && <p>Searching...</p>}
+      {loading && <p>{t("searching...")}</p>}
 
       {results.length === 0 && query.trim().length >= 2 && !loading && (
-        <p>No users found.</p>
+        <p>{t("no-users-found")}</p>
       )}
 
       <div>

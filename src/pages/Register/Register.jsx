@@ -1,6 +1,8 @@
+// src/pages/Register/Register.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "../../i18n/useTranslation"; // ← добавлен
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -10,24 +12,20 @@ export default function Register() {
   const [error, setError] = useState("");
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation(); // ← хук
 
   const validatePassword = (pass) => {
-    const minLength = 8;
-    const hasUpperCase = /[A-Z]/.test(pass);
-    const hasLowerCase = /[a-z]/.test(pass);
-    const hasNumber = /[0-9]/.test(pass);
-
-    if (!minLength) {
-      return "Password must be at least 8 characters long.";
+    if (pass.length < 8) {
+      return t("password-too-short");
     }
-    if (!hasUpperCase) {
-      return "Password must contain at least one uppercase letter.";
+    if (!/[A-Z]/.test(pass)) {
+      return t("password-uppercase");
     }
-    if (!hasLowerCase) {
-      return "Password must contain at least one lowercase letter.";
+    if (!/[a-z]/.test(pass)) {
+      return t("password-lowercase");
     }
-    if (!hasNumber) {
-      return "Password must contain at least one number.";
+    if (!/[0-9]/.test(pass)) {
+      return t("password-number");
     }
     return null;
   };
@@ -42,27 +40,27 @@ export default function Register() {
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("passwords-do-not-match"));
       return;
     }
     try {
       await register(username, email, password);
-      alert("Registration successful! Please log in.");
+      alert(t("registration-successful"));
       navigate("/login");
     } catch (err) {
-      setError(err.message || "Registration failed");
+      setError(err.message || t("registration-failed"));
     }
   };
 
   return (
     <div style={{ padding: "20px", maxWidth: "400px", margin: "0 auto" }}>
-      <h2>Register</h2>
+      <h2>{t("register")}</h2>
       {error && <p style={{ color: "red" }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <div>
           <input
             type="text"
-            placeholder="Username"
+            placeholder={t("username")}
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
@@ -71,7 +69,7 @@ export default function Register() {
         <div style={{ margin: "10px 0" }}>
           <input
             type="email"
-            placeholder="Email"
+            placeholder={t("email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -80,7 +78,7 @@ export default function Register() {
         <div style={{ margin: "10px 0" }}>
           <input
             type="password"
-            placeholder="Password"
+            placeholder={t("password")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -89,14 +87,13 @@ export default function Register() {
         <div style={{ margin: "10px 0" }}>
           <input
             type="password"
-            placeholder="Confirm Password"
+            placeholder={t("confirm-password")}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
           />
         </div>
-
-        <button type="submit">Register</button>
+        <button type="submit">{t("register")}</button>
       </form>
     </div>
   );

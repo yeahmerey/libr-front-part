@@ -3,7 +3,10 @@ import { useEffect, useState } from "react";
 import apiClient from "../../services/apiClient.js";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "../../i18n/useTranslation"; // ← добавлен импорт
+
 export default function AdminPanel() {
+  const { t } = useTranslation(); // ← хук локализации
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,18 +28,18 @@ export default function AdminPanel() {
         const data = await apiClient("/admin/users");
         setUsers(data);
       } catch (err) {
-        alert("Failed to load users: " + (err.message || err));
+        alert(t("failed-to-load-users") + (err.message || err));
       } finally {
         setLoading(false);
       }
     };
     fetchUsers();
-  }, [user]);
+  }, [user, t]);
 
   const createUser = async (e) => {
     e.preventDefault();
     if (!newUsername.trim() || !newEmail.trim() || !newPassword.trim()) {
-      alert("All fields are required.");
+      alert(t("all-fields-required"));
       return;
     }
     try {
@@ -48,7 +51,7 @@ export default function AdminPanel() {
           password: newPassword,
         }),
       });
-      alert("User created successfully!");
+      alert(t("user-created-successfully"));
       setNewUsername("");
       setNewEmail("");
       setNewPassword("");
@@ -56,7 +59,7 @@ export default function AdminPanel() {
       const data = await apiClient("/admin/users");
       setUsers(data);
     } catch (err) {
-      alert("Failed to create user: " + (err.message || err));
+      alert(t("failed-to-create-user") + (err.message || err));
     }
   };
 
@@ -67,7 +70,7 @@ export default function AdminPanel() {
 
   const saveEdit = async (userId) => {
     if (!editUsername.trim()) {
-      alert("Username cannot be empty.");
+      alert(t("username-cannot-be-empty"));
       return;
     }
     try {
@@ -81,9 +84,9 @@ export default function AdminPanel() {
         )
       );
       setEditUserId(null);
-      alert("Username updated!");
+      alert(t("username-updated"));
     } catch (err) {
-      alert("Failed to update username: " + (err.message || err));
+      alert(t("failed-to-update-username") + (err.message || err));
     }
   };
 
@@ -92,7 +95,7 @@ export default function AdminPanel() {
   };
 
   const toggleAdmin = async (userId) => {
-    if (!window.confirm("Toggle admin status?")) return;
+    if (!window.confirm(t("toggle-admin-status"))) return;
     try {
       await apiClient(`/admin/users/${userId}/toggle-admin`, { method: "PUT" });
       setUsers(
@@ -101,32 +104,34 @@ export default function AdminPanel() {
         )
       );
     } catch (err) {
-      alert("Failed to update admin status: " + (err.message || err));
+      alert(t("failed-to-update-admin-status") + (err.message || err));
     }
   };
 
   const deleteUser = async (userId) => {
-    if (!window.confirm("Delete user?")) return;
+    if (!window.confirm(t("delete-user"))) return;
     try {
       await apiClient(`/admin/users/${userId}`, { method: "DELETE" });
       setUsers(users.filter((u) => u.id !== userId));
     } catch (err) {
-      alert("Failed to delete user: " + (err.message || err));
+      alert(t("failed-to-delete-user") + (err.message || err));
     }
   };
 
   if (!user?.is_admin) {
-    return <p>Access denied. Admins only.</p>;
+    return <p>{t("access-denied-admins-only")}</p>;
   }
 
-  if (loading) return <p>Loading users...</p>;
+  if (loading) return <p>{t("loading-users")}</p>;
 
   return (
     <div style={{ padding: "20px", maxWidth: "1000px", margin: "0 auto" }}>
-      <h2>Admin Panel — Users ({users.length})</h2>
-      <button onClick={() => navigate(-1)}>Back</button>
-      {/* <Link to="/profile">Back to Profile</Link> */}
-      <Link to="/admin/content">Create Content</Link>
+      <h2>{t("admin-panel-users", { count: users.length })}</h2>
+      <button onClick={() => navigate(-1)}>{t("back")}</button>
+      <Link to="/admin/content" style={{ marginLeft: "10px" }}>
+        {t("create-content")}
+      </Link>
+
       {/* Форма создания пользователя */}
       <div
         style={{
@@ -136,11 +141,11 @@ export default function AdminPanel() {
           borderRadius: "8px",
         }}
       >
-        <h3>Create New User</h3>
+        <h3>{t("create-new-user")}</h3>
         <form onSubmit={createUser}>
           <input
             type="text"
-            placeholder="Username"
+            placeholder={t("username")}
             value={newUsername}
             onChange={(e) => setNewUsername(e.target.value)}
             style={{
@@ -152,7 +157,7 @@ export default function AdminPanel() {
           />
           <input
             type="email"
-            placeholder="Email"
+            placeholder={t("email")}
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             style={{
@@ -164,7 +169,7 @@ export default function AdminPanel() {
           />
           <input
             type="password"
-            placeholder="Password"
+            placeholder={t("password")}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             style={{
@@ -185,19 +190,20 @@ export default function AdminPanel() {
               cursor: "pointer",
             }}
           >
-            Create User
+            {t("create-user")}
           </button>
         </form>
       </div>
+
       {/* Таблица пользователей */}
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Admin</th>
-            <th>Actions</th>
+            <th>{t("id")}</th>
+            <th>{t("username")}</th>
+            <th>{t("email")}</th>
+            <th>{t("admin")}</th>
+            <th>{t("actions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -235,7 +241,7 @@ export default function AdminPanel() {
                             cursor: "pointer",
                           }}
                         >
-                          Save
+                          {t("save")}
                         </button>
                         <button
                           onClick={cancelEdit}
@@ -249,7 +255,7 @@ export default function AdminPanel() {
                             cursor: "pointer",
                           }}
                         >
-                          Cancel
+                          {t("cancel")}
                         </button>
                       </>
                     ) : (
@@ -263,7 +269,7 @@ export default function AdminPanel() {
                           cursor: "pointer",
                         }}
                       >
-                        Edit
+                        {t("edit")}
                       </button>
                     )}
                     <button
@@ -278,7 +284,7 @@ export default function AdminPanel() {
                         cursor: "pointer",
                       }}
                     >
-                      {u.is_admin ? "Remove Admin" : "Make Admin"}
+                      {u.is_admin ? t("remove-admin") : t("make-admin")}
                     </button>
                     <button
                       onClick={() => deleteUser(u.id)}
@@ -292,7 +298,7 @@ export default function AdminPanel() {
                         cursor: "pointer",
                       }}
                     >
-                      Delete
+                      {t("delete")}
                     </button>
                   </>
                 )}

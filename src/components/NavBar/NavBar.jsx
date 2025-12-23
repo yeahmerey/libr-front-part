@@ -1,23 +1,29 @@
+// src/components/NavBar/NavBar.jsx
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "../../i18n/useTranslation";
+
 export default function NavBar() {
   const { user, logout } = useAuth();
+  const { t, changeLanguage } = useTranslation(); // ← локализация
 
   return (
     <>
       <nav className="nav">
-        <NavLink to="/">Home</NavLink>
-        <NavLink to="/search">Search</NavLink>
-        <NavLink to="/content">Content</NavLink>
-        {user && <NavLink to="/profile">Profile</NavLink>}
-        {user && <NavLink to="/chat">AI Chat</NavLink>}
-        {user && user.is_admin && <NavLink to="/admin">Admin Panel</NavLink>}
+        <NavLink to="/">{t("home")}</NavLink>
+        <NavLink to="/search">{t("search")}</NavLink>
+        <NavLink to="/content">{t("books-&-movies")}</NavLink>
+        {user && <NavLink to="/profile">{t("profile")}</NavLink>}
+        {user && <NavLink to="/chat">{t("ai-chat")}</NavLink>}
+        {user && user.is_admin && (
+          <NavLink to="/admin">{t("manage-content")}</NavLink>
+        )}
       </nav>
 
       <nav className="nav-second">
         {user ? (
           <div className="auth-info">
-            Hello, {user.username}!{" "}
+            {t("hello", { username: user.username })}!{" "}
             <button
               onClick={logout}
               style={{
@@ -27,15 +33,34 @@ export default function NavBar() {
                 cursor: "pointer",
               }}
             >
-              Logout
+              {t("logout")}
             </button>
           </div>
         ) : (
           <>
-            <NavLink to="/login">Login</NavLink>
-            <NavLink to="/register">Register</NavLink>
+            <NavLink to="/login">{t("login")}</NavLink>
+            <NavLink to="/register">{t("register")}</NavLink>
           </>
         )}
+        {/* Переключатель языка */}
+        <button
+          onClick={() => changeLanguage("en")}
+          style={{ marginLeft: "10px" }}
+        >
+          EN
+        </button>
+        <button
+          onClick={() => changeLanguage("ru")}
+          style={{ marginLeft: "6px" }}
+        >
+          RU
+        </button>
+        <button
+          onClick={() => changeLanguage("kk")}
+          style={{ marginLeft: "6px" }}
+        >
+          KK
+        </button>
       </nav>
     </>
   );

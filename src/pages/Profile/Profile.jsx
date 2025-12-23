@@ -4,8 +4,9 @@ import { useAuth } from "../../context/AuthContext";
 import { userService } from "../../services/userService";
 import { postService } from "../../services/postService";
 import { Link } from "react-router-dom";
-
+import { useTranslation } from "../../i18n/useTranslation";
 export default function Profile() {
+  const { t } = useTranslation();
   const { user, setUser } = useAuth();
   const fileInputRef = useRef(null);
 
@@ -140,7 +141,9 @@ export default function Profile() {
       const year = parseInt(payload.year_of_birth, 10);
       if (isNaN(year) || year < 1900 || year > new Date().getFullYear()) {
         alert(
-          "Please enter a valid year (1900–" + new Date().getFullYear() + ")"
+          t("please-enter-valid-year", {
+            currentYear: new Date().getFullYear(),
+          })
         );
         return;
       }
@@ -152,7 +155,7 @@ export default function Profile() {
       setUser(updatedUser);
       setEditingProfile(false);
     } catch (err) {
-      alert("Failed to update profile: " + (err.message || err));
+      alert(t("failed-to-update-profile") + (err.message || err));
     }
   };
 
@@ -194,17 +197,17 @@ export default function Profile() {
       setPosts(userPosts || []);
       setIsCreating(false);
     } catch (err) {
-      alert("Failed to save post: " + (err.message || err));
+      alert(t("failed-to-save-post") + (err.message || err));
     }
   };
 
   const handleDeletePost = async (postId) => {
-    if (!window.confirm("Delete this post?")) return;
+    if (!window.confirm(t("delete-this-post"))) return;
     try {
       await postService.deletePost(postId);
       setPosts(posts.filter((p) => p.id !== postId));
     } catch (err) {
-      alert("Failed to delete post: " + (err.message || err));
+      alert(t("failed-to-delete-post") + (err.message || err));
     }
   };
 
@@ -213,7 +216,7 @@ export default function Profile() {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file");
+      alert(t("image-file-only"));
       return;
     }
     try {
@@ -223,7 +226,7 @@ export default function Profile() {
       const updatedUser = await userService.getUserById(user.id);
       setUser(updatedUser);
     } catch (err) {
-      alert("Failed to upload avatar: " + err.message);
+      alert(t("failed-to-upload-avatar") + (err.message || err));
       setAvatarPreview(
         user.image_url ? `http://localhost:8000${user.image_url}` : null
       );
@@ -243,7 +246,7 @@ export default function Profile() {
       setFollowersList(followers);
       setShowFollowers(true);
     } catch (err) {
-      alert("Failed to load followers", err);
+      alert(t("failed-to-load-followers") + (err.message || err));
     }
   };
 
@@ -253,11 +256,11 @@ export default function Profile() {
       setFollowingList(following);
       setShowFollowing(true);
     } catch (err) {
-      alert("Failed to load following", err);
+      alert(t("failed-to-load-following") + (err.message || err));
     }
   };
 
-  if (!user) return <p style={{ padding: "20px" }}>Loading...</p>;
+  if (!user) return <p style={{ padding: "20px" }}>{t("loading...")}</p>;
 
   return (
     <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
@@ -296,7 +299,9 @@ export default function Profile() {
                 marginBottom: "15px",
               }}
             >
-              <h3>Followers ({followersCount})</h3>
+              <h3>
+                {t("followers")} ({followersCount})
+              </h3>
               <button
                 onClick={() => setShowFollowers(false)}
                 style={{
@@ -311,7 +316,7 @@ export default function Profile() {
               </button>
             </div>
             {followersList.length === 0 ? (
-              <p>No followers yet.</p>
+              <p>{t("no-followers-yet")}</p>
             ) : (
               <div>
                 {followersList.map((follower) => (
@@ -389,7 +394,9 @@ export default function Profile() {
                 marginBottom: "15px",
               }}
             >
-              <h3>Following ({followingCount})</h3>
+              <h3>
+                {t("following")} ({followingCount})
+              </h3>
               <button
                 onClick={() => setShowFollowing(false)}
                 style={{
@@ -404,7 +411,7 @@ export default function Profile() {
               </button>
             </div>
             {followingList.length === 0 ? (
-              <p>Not following anyone yet.</p>
+              <p>{t("not-following-anyone-yet")}</p>
             ) : (
               <div>
                 {followingList.map((following) => (
@@ -517,7 +524,7 @@ export default function Profile() {
           style={{ display: "none" }}
         />
         <p style={{ marginTop: "8px", fontSize: "0.9em", color: "#666" }}>
-          Click avatar to change
+          {t("click-avatar-to-change")}
         </p>
       </div>
 
@@ -526,17 +533,17 @@ export default function Profile() {
           onClick={loadFollowers}
           style={{ cursor: "pointer", color: "#007bff", fontWeight: "bold" }}
         >
-          <strong>{followersCount}</strong> followers
+          <strong>{followersCount}</strong> {t("followers")}
         </div>
         <div
           onClick={loadFollowing}
           style={{ cursor: "pointer", color: "#007bff", fontWeight: "bold" }}
         >
-          <strong>{followingCount}</strong> following
+          <strong>{followingCount}</strong> {t("following")}
         </div>
       </div>
 
-      <h2>Profile</h2>
+      <h2>{t("profile")}</h2>
       {editingProfile ? (
         <form
           onSubmit={handleProfileSubmit}
@@ -550,7 +557,7 @@ export default function Profile() {
         >
           <input
             name="username"
-            placeholder="Username"
+            placeholder={t("username")}
             value={profileData.username}
             onChange={handleProfileChange}
             required
@@ -563,7 +570,7 @@ export default function Profile() {
           />
           <textarea
             name="bio"
-            placeholder="Bio"
+            placeholder={t("bio")}
             value={profileData.bio}
             onChange={handleProfileChange}
             rows="2"
@@ -571,7 +578,7 @@ export default function Profile() {
           />
           <input
             name="location"
-            placeholder="Location"
+            placeholder={t("location")}
             value={profileData.location}
             onChange={handleProfileChange}
             style={{
@@ -584,7 +591,7 @@ export default function Profile() {
           <input
             name="year_of_birth"
             type="number"
-            placeholder="Year of Birth"
+            placeholder={t("year-of-birth")}
             value={profileData.year_of_birth}
             onChange={handleProfileChange}
             min="1900"
@@ -608,7 +615,7 @@ export default function Profile() {
                 cursor: "pointer",
               }}
             >
-              Save Profile
+              {t("save-profile")}
             </button>
             <button
               type="button"
@@ -623,28 +630,28 @@ export default function Profile() {
                 cursor: "pointer",
               }}
             >
-              Cancel
+              {t("cancel")}
             </button>
           </div>
         </form>
       ) : (
         <div style={{ marginBottom: "20px" }}>
           <p>
-            <strong>Username:</strong> {user.username}
+            <strong>{t("username")}:</strong> {user.username}
           </p>
           {user.bio && (
             <p>
-              <strong>Bio:</strong> {user.bio}
+              <strong>{t("bio")}:</strong> {user.bio}
             </p>
           )}
           {user.location && (
             <p>
-              <strong>Location:</strong> {user.location}
+              <strong>{t("location")}:</strong> {user.location}
             </p>
           )}
           {user.year_of_birth && (
             <p>
-              <strong>Year of Birth:</strong> {user.year_of_birth}
+              <strong>{t("year-of-birth")}:</strong> {user.year_of_birth}
             </p>
           )}
           <button
@@ -659,7 +666,7 @@ export default function Profile() {
               cursor: "pointer",
             }}
           >
-            Edit Profile
+            {t("edit-profile")}
           </button>
         </div>
       )}
@@ -677,7 +684,7 @@ export default function Profile() {
           marginBottom: "15px",
         }}
       >
-        <h2>My Posts</h2>
+        <h2>{t("my-posts")}</h2>
         <button
           onClick={startCreatePost}
           style={{
@@ -689,7 +696,7 @@ export default function Profile() {
             cursor: "pointer",
           }}
         >
-          + New Post
+          {t("new-post")}
         </button>
       </div>
 
@@ -706,7 +713,7 @@ export default function Profile() {
         >
           <textarea
             name="content"
-            placeholder="Write your post..."
+            placeholder={t("write-your-post")}
             value={postForm.content}
             onChange={handlePostChange}
             required
@@ -732,7 +739,7 @@ export default function Profile() {
                 cursor: "pointer",
               }}
             >
-              {editingPostId ? "Update Post" : "Create Post"}
+              {editingPostId ? t("update-post") : t("create-post")}
             </button>
             <button
               type="button"
@@ -747,16 +754,16 @@ export default function Profile() {
                 cursor: "pointer",
               }}
             >
-              Cancel
+              {t("cancel")}
             </button>
           </div>
         </form>
       )}
 
       {loadingPosts ? (
-        <p>Loading posts...</p>
+        <p>{t("loading-posts")}</p>
       ) : posts.length === 0 ? (
-        <p>No posts yet.</p>
+        <p>{t("no-posts-yet")}</p>
       ) : (
         <div>
           {posts.map((post) => (
@@ -800,7 +807,7 @@ export default function Profile() {
                     cursor: "pointer",
                   }}
                 >
-                  Edit
+                  {t("edit")}
                 </button>
                 <button
                   onClick={() => handleDeletePost(post.id)}
@@ -813,7 +820,7 @@ export default function Profile() {
                     cursor: "pointer",
                   }}
                 >
-                  Delete
+                  {t("delete")}
                 </button>
               </div>
             </div>
@@ -823,11 +830,13 @@ export default function Profile() {
 
       {/* === My Reviews Section — НОВОЕ === */}
       <div style={{ marginTop: "40px" }}>
-        <h2>My Reviews ({reviews.length})</h2>
+        <h2>
+          {t("my-reviews")} ({reviews.length})
+        </h2>
         {loadingReviews ? (
-          <p>Loading reviews...</p>
+          <p>{t("loading-reviews")}</p>
         ) : reviews.length === 0 ? (
-          <p>You haven't reviewed any content yet.</p>
+          <p>{t("no-reviews-yet")}</p>
         ) : (
           <div
             style={{ display: "flex", flexDirection: "column", gap: "15px" }}
